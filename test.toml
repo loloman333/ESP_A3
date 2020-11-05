@@ -1,0 +1,127 @@
+# Testcase Structure:
+#    name: String, // The name of the testcase
+#    subname: Option<String>, // used for unittests later
+#    testcase_type: String, //Only IO supported now
+#    description: Option<String>, // optional description
+#    args: Option<String>, // command line arguments
+#    cflags: Option<String>, // compile flags
+#    tags: Option<Tags>, // tags for unit tests
+#    in_file: Option<String>, // stdin file
+#    exp_file: Option<String>, // stdout file
+#    in_string: Option<String>, // stdin string (in_file has higher priority)
+#    exp_string: Option<String>, // stdout string (out_file has higher priority)
+#    exp_retvar: Option<i32>, // optional expected status code
+#    timeout: Option<i32>, // timeout in seconds .. default is 5 sec
+#    env_vars:Option<String>, // optional environment parameters RAND_SEED=123,foo=bar
+
+[project_data]
+project_name = "a3"
+makefile_path = "."
+maketarget = "all"
+
+[[testcases]]
+name = "not_enough_parameters"
+testcase_type = "IO"
+description = "Not enough parameters"
+exp_file = "tests/01_not_enough_parameters/out"
+in_file = "tests/01_not_enough_parameters/in"
+exp_retvar = 1
+
+[[testcases]]
+name = "vaild_config"
+testcase_type = "IO"
+description = "Valid config"
+exp_file = "tests/02_valid_config/out"
+in_file = "tests/02_valid_config/in"
+args = "config/config_02.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "invaild_config"
+testcase_type = "IO"
+description = "Invalid config"
+exp_file = "tests/03_invalid_config/out"
+in_file = "tests/03_invalid_config/in"
+args = "config/config_03.bin"
+exp_retvar = 3
+
+[[testcases]]
+name = "invaild_command"
+testcase_type = "IO"
+description = "Invalid command"
+exp_file = "tests/04_invalid_command/out"
+in_file = "tests/04_invalid_command/in"
+args = "config/config_04.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "rotate_wrong_parameter"
+testcase_type = "IO"
+description = "Rotate wrong parameter"
+exp_file = "tests/05_rotate_wrong_parameter/out"
+in_file = "tests/05_rotate_wrong_parameter/in"
+args = "config/config_05.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "rotate_once_side"
+testcase_type = "IO"
+description = "Rotate one time side"
+exp_file = "tests/06_rotate_once_side/out"
+in_file = "tests/06_rotate_once_side/in"
+args = "config/config_06.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "rotate_once_middle"
+testcase_type = "IO"
+description = "Rotate one time middle"
+exp_file = "tests/07_rotate_once_middle/out"
+in_file = "tests/07_rotate_once_middle/in"
+args = "config/config_07.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "rotate_three_times"
+testcase_type = "IO"
+description = "Rotate three times"
+exp_file = "tests/08_rotate_three_times/out"
+in_file = "tests/08_rotate_three_times/in"
+args = "config/config_08.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "short_game"
+testcase_type = "IO"
+description = "Short game"
+exp_file = "tests/09_short_game/out"
+in_file = "tests/09_short_game/in"
+args = "config/config_09.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "game_with_restart"
+testcase_type = "IO"
+description = "Game with restart"
+exp_file = "tests/10_game_with_restart/out"
+in_file = "tests/10_game_with_restart/in"
+args = "config/config_10.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "asymetric_game"
+testcase_type = "IO"
+description = "Game with asymertic map"
+exp_file = "tests/11_asymetric_game/out"
+in_file = "tests/11_asymetric_game/in"
+args = "config/config_11.bin"
+exp_retvar = 0
+
+[[testcases]]
+name = "game_from_readme"
+testcase_type = "IO"
+description = "Game from Readme"
+exp_file = "tests/12_game_from_readme/out"
+in_file = "tests/12_game_from_readme/in"
+args = "config/config_12.bin"
+exp_retvar = 0

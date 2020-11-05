@@ -1,0 +1,23 @@
+
+ │1234
+─┼────
+1│╞╗╔═
+2│█║╬╚
+3│╣╗╔║
+4│╗╬╝╡
+
+1 > Usage: rotate ( left | right ) ROW COLUMN
+1 > Usage: rotate ( left | right ) ROW COLUMN
+1 > Usage: rotate ( left | right ) ROW COLUMN
+1 > Usage: rotate ( left | right ) ROW COLUMN
+1 > Usage: rotate ( left | right ) ROW COLUMN
+1 > 
+ │1234
+─┼────
+1│╞╗╔═
+2│█║╬╚
+3│╣╗╔║
+4│╗╬╝╡
+
+2 > Error: Rotating start- or end-pipe is not allowed
+2 > 

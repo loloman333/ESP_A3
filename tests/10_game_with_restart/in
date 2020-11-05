@@ -1,0 +1,10 @@
+rotate left 3 3
+rotate right 4 5
+restart
+rotate left 3 3
+rotate right 3 2
+rotate right 2 3
+rotate right 2 3
+rotate right 2 3
+rotate right 3 1
+rotate left 1 3
