@@ -1,6 +1,6 @@
 CC            := clang
 CCFLAGS       := -Wall -Wextra -Werror -pedantic -std=c17 -g
-ASSIGNMENT    := a3
+ASSIGNMENT    := ass3
 .DEFAULT_GOAL := help
 
 .PHONY: reset clean bin lib all run test help
@@ -39,8 +39,22 @@ run: all		## runs the project with default config
 test: all		## runs public testcases on the project
 	@echo "[\033[36mINFO\033[0m] Executing testrunner..."
 	./testrunner -c test.toml
+	
+testbychar: all             ## runs public testcases on the project compares output char by char
+	@echo "[\033[36mINFO\033[0m] Executing testrunner..."
+	./testrunner -c test.toml -m char
 
+testbyword: all             ## runs public testcases on the project compares output word by word
+	@echo "[\033[36mINFO\033[0m] Executing testrunner..."
+	./testrunner -c test.toml -m word
+	
+testprint: all             ## runs public testcases on the project compares output line by line, prints to terminal
+	@echo "[\033[36mINFO\033[0m] Executing testrunner..."
+	./testrunner -c test.toml -v
+	
 help:			## prints the help text
 	@echo "Usage: make \033[36m<TARGET>\033[0m"
 	@echo "Available targets:"
 	@awk -F':.*?##' '/^[a-zA-Z_-]+:.*?##.*$$/{printf "  \033[36m%-10s\033[0m%s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	
+	
