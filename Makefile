@@ -1,6 +1,6 @@
 CC            := clang
 CCFLAGS       := -Wall -Wextra -Werror -pedantic -std=c17 -g
-ASSIGNMENT    := ass3
+ASSIGNMENT    := a3
 .DEFAULT_GOAL := help
 
 .PHONY: reset clean bin lib all run test help
