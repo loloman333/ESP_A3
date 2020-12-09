@@ -387,6 +387,7 @@ Eine Beispiel-Ausgabe ist in der Datei [EXAMPLE.txt](./EXAMPLE.txt) zu finden.
    - Das Spielfeld wird als 2-dimensionales Array von `uint8_t` gespeichert
    - Die Highscore-Liste wird mit eigenem Datentypen (siehe
      [Datentypen -> Highscore](#highscore)) gespeichert
+- **Das framework darf nicht verändert werden**
 
 ## Abgabe
 
@@ -411,3 +412,4 @@ bewertet. Machen Sie sich auch mit dem [Beurteilungsschema](https://tc.tugraz.at
 - Nives Krizanec
 - Clemens Oberhauser
 - Lukas Pucher
+- Kilian Payer
