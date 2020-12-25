@@ -257,8 +257,9 @@ bool parseCommandRotate(size_t* dir, uint8_t* row, uint8_t* col)
     token = strtok(NULL, " \t\n");
     if (token != NULL)
     {
-      int num = strtol(token, NULL, 10);
-      if (num < 1)
+      char** token_end = &token;
+      int num = strtol(token, token_end, 10);
+      if (num < 1 || strchr(" \t\n", **token_end) == NULL)
       {
         return false;
       }
@@ -267,8 +268,8 @@ bool parseCommandRotate(size_t* dir, uint8_t* row, uint8_t* col)
       token = strtok(NULL, " \t\n");
       if (token != NULL)
       {
-        num = strtol(token, NULL, 10);
-        if (num < 1)
+        num = strtol(token, token_end, 10);
+        if (num < 1 || strchr(" \t\n", **token_end) == NULL)
         {
           return false;
         }
