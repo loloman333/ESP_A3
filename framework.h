@@ -39,7 +39,6 @@ typedef enum _Command_
   RESTART
 } Command;
 
-
 // ----------------------------------------------------------------------------
 // Prints the game map
 //
