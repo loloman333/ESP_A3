@@ -64,6 +64,10 @@ FILE* openConfigFile(char* file_name, ReturnValue* error_code);
 void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, ReturnValue* error_code);
 void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error_code);
 void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code);
+
+Command getInput(uint8_t* row, uint8_t* col, Direction* dir);
+void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* stop);
+
 void freeResources(Board* game_board, Highscore* highscore_list);
 int exitApplication(ReturnValue error_code, char* error_context);
 
@@ -99,43 +103,46 @@ int main(int argc, char** argv) //TODO: char** argv == char * argv[]  ???
     return exitApplication(error_code, NULL);
   }
 
-  unsigned round = 0;
-  char* input;
+  Command command = 0;
+  Direction dir = 0;
+  uint8_t row = 0;
+  uint8_t col = 0;
 
-  Command command;
-  Direction dir;
-  uint8_t row;
-  uint8_t col;
+  char stop = 0;
 
-  char* ret;
-
-  //TODO in while loop
-
-  printMap(game_board->map, game_board->map_width, game_board->map_height, game_board->start, game_board->end);
-  printf(INPUT_PROMPT, round);
-  input = getLine();
-  ret = parseCommand(input, &command, &dir, &row, &col);
-
-  if (ret == NULL)
+  while(!stop)
   {
-    //WORKED BITCH
-  } 
-  else if(ret == 1)
-  {
-    // USAGE_COMMAND_ROTATE
-  } 
-  else 
-  {
-    //INVALID COMMAND
+    printMap(
+      game_board->map, 
+      game_board->map_width, 
+      game_board->map_height, 
+      game_board->start, 
+      game_board->end
+    );
+
+    command = getInput(&row, &col, &dir);
+    if (command == NONE)
+    {
+      error_code = OUT_OF_MEMORY;
+      break;
+    }
+
+    runCommand(command, row, col, dir, &stop);
+
+    if (!stop)
+    {
+      stop = arePipesConnected(
+      game_board->map, 
+      game_board->map_width, 
+      game_board->map_height, 
+      game_board->start, 
+      game_board->end
+    );
+    }  
   }
 
   freeResources(game_board, highscore_list);
-
-  /*
-  char* line = getLine();
-  printf("%s", line);
-  */
-  return error_code;
+  return exitApplication(error_code, NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -273,6 +280,92 @@ void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
       //TODO remove
       //printf("%s\n", pipeToChar(game_board->map[row_index][col_index]));
     }
+  }
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// TODO
+/// 
+///
+/// @return TODO
+//
+Command getInput(uint8_t* row, uint8_t* col, Direction* dir)
+{
+  static unsigned round = 1;
+  char* input;
+
+  printf(INPUT_PROMPT, round);
+  input = getLine();
+  if (input == NULL)
+  {
+    return NONE;
+  } 
+  else if (input == (char*) EOF)
+  {
+    round++;
+    return QUIT;
+  }
+
+  Command command = NONE;
+  char* ret;
+
+  ret = parseCommand(input, &command, (size_t*)dir, row, col);
+  free(input);
+
+  if (ret == NULL)
+  {
+    if (command != NONE)
+    {
+      round++;
+      return command;
+    }
+  } 
+  else if(ret == (char*) 1)
+  {
+    printf(USAGE_COMMAND_ROTATE);
+  } 
+  else 
+  {
+    printf(ERROR_UNKNOWN_COMMAND, ret);
+  }
+
+  return getInput(row, col, dir);
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// TODO
+/// 
+///
+/// @return TODO
+//
+void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* stop)
+{
+  row = 0;
+  col = 0;
+  dir = 0;
+
+  switch (command)
+  {
+  case QUIT:
+    *stop = 1;
+    break;
+
+  case HELP:
+    printf(HELP_TEXT);
+    break;
+
+  case RESTART:
+    *stop = 1;
+    break;
+
+  case ROTATE:
+    *stop = 1;
+    break;
+  
+  default:
+    break;
   }
 }
 
