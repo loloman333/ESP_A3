@@ -19,6 +19,7 @@
 
 // Defines
 #define MAGIC_NUMBER "ESPipes"
+#define DO_RESTART 2
 
 // Typedefs
 typedef enum _ReturnValue_
@@ -60,13 +61,17 @@ typedef enum _Direction_
 } Direction;
 
 // Forward Definitions     TODO: order these the same way as below
+
+ReturnValue loadGame(Board** game_board, Highscore** highscore_list, char* file_name, char** error_context);
 FILE* openConfigFile(char* file_name, ReturnValue* error_code);
 void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, ReturnValue* error_code);
 void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error_code);
 void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code);
 
-Command getInput(uint8_t* row, uint8_t* col, Direction* dir);
-void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* stop);
+ReturnValue runGame(Board* game_board, char* restart);
+Command getInput(char round, uint8_t* row, uint8_t* col, Direction* dir);
+void runCommand(Command command, Board* game_board, uint8_t row, uint8_t col, Direction dir, char* stop);
+void rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir);
 
 void freeResources(Board* game_board, Highscore* highscore_list);
 int exitApplication(ReturnValue error_code, char* error_context);
@@ -87,62 +92,48 @@ int main(int argc, char** argv) //TODO: char** argv == char * argv[]  ???
   }
 
   ReturnValue error_code = SUCCESS;
-
-  FILE* file = openConfigFile(argv[1], &error_code);
-  if (error_code != SUCCESS)
-  {
-    return exitApplication(error_code, argv[1]);
-  }
-
+  char* error_context = NULL;
   Board* game_board = NULL;
   Highscore* highscore_list = NULL;
-  loadConfigFile(&game_board, &highscore_list, file, &error_code);
-  if (error_code != SUCCESS)
+  char restart = false;
+
+  do 
   {
-    freeResources(game_board, highscore_list);
-    return exitApplication(error_code, NULL);
-  }
-
-  Command command = 0;
-  Direction dir = 0;
-  uint8_t row = 0;
-  uint8_t col = 0;
-
-  char stop = 0;
-
-  while(!stop)
-  {
-    printMap(
-      game_board->map, 
-      game_board->map_width, 
-      game_board->map_height, 
-      game_board->start, 
-      game_board->end
-    );
-
-    command = getInput(&row, &col, &dir);
-    if (command == NONE)
+    error_code = loadGame(&game_board, &highscore_list, argv[1], &error_context);
+    if (error_code != NONE)
     {
-      error_code = OUT_OF_MEMORY;
       break;
     }
-
-    runCommand(command, row, col, dir, &stop);
-
-    if (!stop)
-    {
-      stop = arePipesConnected(
-      game_board->map, 
-      game_board->map_width, 
-      game_board->map_height, 
-      game_board->start, 
-      game_board->end
-    );
-    }  
+    
+    error_code = runGame(game_board, &restart);
   }
+  while (restart);
 
   freeResources(game_board, highscore_list);
-  return exitApplication(error_code, NULL);
+  return exitApplication(error_code, error_context);
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// TODO
+/// 
+///
+/// @return TODO
+//
+ReturnValue loadGame(Board** game_board, Highscore** highscore_list, char* file_name, char** error_context)
+{
+  ReturnValue error_code = SUCCESS;
+
+  FILE* file = openConfigFile(file_name, &error_code);
+  if (error_code != SUCCESS)
+  {
+    *error_context = file_name;
+    return error_code;
+  }
+
+  loadConfigFile(game_board, highscore_list, file, &error_code);
+
+  return error_code;
 }
 
 //-----------------------------------------------------------------------------
@@ -184,7 +175,7 @@ FILE* openConfigFile(char* file_name, ReturnValue* error_code)
 //
 void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, ReturnValue* error_code)
 {
-  *game_board = malloc(sizeof(Board));         //TODO: malloc in main (?)
+  *game_board = malloc(sizeof(Board));
   *highscore_list = malloc(sizeof(Highscore));
 
   if (game_board == NULL || highscore_list == NULL)
@@ -208,15 +199,6 @@ void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, 
   fread(&((*game_board)->start), 1, 2, file);
   fread(&((*game_board)->end), 1, 2, file);
   fread(&((*highscore_list)->count), 1, 1, file);
-
-  /* TODO: Remove
-  printf("Width: %d\n", game_board->map_width);
-  printf("Height: %d\n", game_board->map_height);
-  printf("# of Highscores: %d\n", highscore_list->count);
-
-  printf("Start Row: %d\n", game_board->start[0]);
-  printf("Start Col: %d\n", game_board->start[1]);
-  */
 
   // Read variable-sized part of config
   loadHighscoreList(*highscore_list, file, error_code);
@@ -276,9 +258,6 @@ void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
     for (int col_index = 0; col_index < game_board->map_width; col_index++)
     {    
       fread(&(game_board->map[row_index][col_index]), 1, 1, file);
-
-      //TODO remove
-      //printf("%s\n", pipeToChar(game_board->map[row_index][col_index]));
     }
   }
 }
@@ -290,9 +269,64 @@ void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
 ///
 /// @return TODO
 //
-Command getInput(uint8_t* row, uint8_t* col, Direction* dir)
+ReturnValue runGame(Board* game_board, char* restart)
 {
-  static unsigned round = 1;
+  Command command = 0;
+  Direction dir = 0;
+  uint8_t row = 0;
+  uint8_t col = 0;
+  char stop = false;
+  char round = 1;
+
+  while(!stop)
+  {
+    printMap(
+      game_board->map, 
+      game_board->map_width, 
+      game_board->map_height, 
+      game_board->start, 
+      game_board->end
+    );
+
+    command = getInput(round, &row, &col, &dir);
+    if (command == NONE)
+    {
+      return OUT_OF_MEMORY;
+    }
+
+    runCommand(command, game_board, row, col, dir, &stop);
+    round++;
+
+    if (stop == DO_RESTART)
+    {
+      *restart = true;
+      return SUCCESS;
+    }
+
+    if (!stop)
+    {
+      stop = arePipesConnected(
+        game_board->map, 
+        game_board->map_width, 
+        game_board->map_height, 
+        game_board->start, 
+        game_board->end
+      );
+    }  
+  }
+
+  return SUCCESS;
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// TODO
+/// 
+///
+/// @return TODO
+//
+Command getInput(char round, uint8_t* row, uint8_t* col, Direction* dir)
+{
   char* input;
 
   printf(INPUT_PROMPT, round);
@@ -330,7 +364,7 @@ Command getInput(uint8_t* row, uint8_t* col, Direction* dir)
     printf(ERROR_UNKNOWN_COMMAND, ret);
   }
 
-  return getInput(row, col, dir);
+  return getInput(round, row, col, dir);
 }
 
 //-----------------------------------------------------------------------------
@@ -340,16 +374,12 @@ Command getInput(uint8_t* row, uint8_t* col, Direction* dir)
 ///
 /// @return TODO
 //
-void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* stop)
+void runCommand(Command command, Board* game_board, uint8_t row, uint8_t col, Direction dir, char* stop)
 {
-  row = 0;
-  col = 0;
-  dir = 0;
-
   switch (command)
   {
   case QUIT:
-    *stop = 1;
+    *stop = true;
     break;
 
   case HELP:
@@ -357,11 +387,11 @@ void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* 
     break;
 
   case RESTART:
-    *stop = 1;
+    *stop = DO_RESTART;
     break;
 
   case ROTATE:
-    *stop = 1;
+    rotatePipe(game_board, row, col, dir);
     break;
   
   default:
@@ -376,17 +406,68 @@ void runCommand(Command command, uint8_t row, uint8_t col, Direction dir, char* 
 ///
 /// @return TODO
 //
+void rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir)
+{
+  if (row > game_board->map_height || col > game_board->map_width)
+  {
+    printf(USAGE_COMMAND_ROTATE);
+    return;
+  }
+
+  if ((row - 1 == game_board->start[0] && col - 1 == game_board->start[1])
+    || (row - 1 == game_board->end[0] && col - 1 == game_board->end[1]))
+  {
+    printf(ERROR_ROTATE_INVALID);
+    return;
+  }
+
+  uint8_t new_pipe = game_board->map[row - 1][col - 1];
+
+  if (dir == LEFT)
+  {
+    uint8_t right = 0x03;
+    new_pipe = ((new_pipe & right) << 6) | (new_pipe >> 2);
+  } 
+  else if (dir == RIGHT)
+  {
+
+    uint8_t left = 0xC0;
+    new_pipe = ((new_pipe & left) >> 6) | (new_pipe << 2);
+  } 
+
+  //STOPPED HERE 
+  //TODO: set connected bits
+
+  game_board->map[row - 1][col - 1] = new_pipe;
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// TODO
+/// 
+///
+/// @return TODO
+//
 void freeResources(Board* game_board, Highscore* highscore_list)
 {
-  free(highscore_list->entries);
-  free(highscore_list);
-
-  for (int i = 0; i < game_board->map_height; i++)
+  if (highscore_list != NULL)
   {
-    free(game_board->map[i]);
+    free(highscore_list->entries);
+    free(highscore_list);
   }
-  free(game_board->map);
-  free(game_board);
+
+  if (game_board != NULL)
+  {
+    if (game_board->map != NULL)
+    {
+      for (int i = 0; i < game_board->map_height; i++)
+      {
+        free(game_board->map[i]);
+      }
+      free(game_board->map);
+    }
+    free(game_board);
+  }  
 }
 
 //-----------------------------------------------------------------------------
