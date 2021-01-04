@@ -2,7 +2,8 @@
 // a3.c
 //
 // ESPipes
-// TODO
+// 
+// 
 //
 // Group: 12
 //
@@ -10,12 +11,14 @@
 //-----------------------------------------------------------------------------
 //
 
+// TODO
+// Write Highscore back in Config File
+
 // Includes
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
 #include "framework.h"
 
 // Defines
@@ -28,18 +31,6 @@
 #define FILTER_RIGHT 0x03
 #define FILTER_LEFT 0xC0
 #define SWITCH 0x40
-
-//TODO REMOVE
-#define BYTE_TO_BINARY_PATTERN "%c%c|%c%c|%c%c|%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  (byte & 0x80 ? '1' : '0'), \
-  (byte & 0x40 ? '1' : '0'), \
-  (byte & 0x20 ? '1' : '0'), \
-  (byte & 0x10 ? '1' : '0'), \
-  (byte & 0x08 ? '1' : '0'), \
-  (byte & 0x04 ? '1' : '0'), \
-  (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
 
 // Typedefs
 typedef enum _ReturnValue_
@@ -621,14 +612,15 @@ void handleScore(Highscore* highscore_list, int score)
 
     for (int i = 0; i < highscore_list->count; i++)
     {
-      if (highscore_list->entries[i].score > new_entry.score)
-      {
-        if (highscore_list->entries[i].score == 0)
-        {
-          highscore_list->entries[i] = new_entry;
-          return;
-        }
+      int entry_score = highscore_list->entries[i].score;
 
+      if (entry_score == 0)
+      {
+        highscore_list->entries[i] = new_entry;
+        break;
+      }
+      else if (entry_score > new_entry.score)
+      {
         HighscoreEntry tmp = highscore_list->entries[i];
         highscore_list->entries[i] = new_entry;
         new_entry = tmp;
@@ -650,7 +642,8 @@ char doesScoreBeatHighscore(Highscore* highscore_list, int score)
 {
   for (int i = 0; i < highscore_list->count; i++)
   {
-    if (highscore_list->entries[i].score > score)
+    int entry_score = highscore_list->entries[i].score; 
+    if (entry_score == 0 || score < entry_score)
     {
       return true;
     }
@@ -721,10 +714,15 @@ void printHighscore(Highscore* highscore_list)
 
   for (int i = 0; i < highscore_list->count; i++)
   {
-    //printf("NAME: %s\n", highscore_list->entries[i].name);
-    //printf("SCORE: %d\n", highscore_list->entries[i].score);
-
-    printf(INFO_HIGHSCORE_ENTRY, highscore_list->entries[i].name, highscore_list->entries[i].score);
+    int score = highscore_list->entries[i].score;
+    if (score == 0)
+    {
+      printf(INFO_HIGHSCORE_ENTRY, "---", score);
+    } 
+    else 
+    {
+      printf(INFO_HIGHSCORE_ENTRY, highscore_list->entries[i].name, score);
+    }
   }
 }
 
