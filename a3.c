@@ -3,7 +3,10 @@
 //
 // ESPipes
 // 
-// 
+// A variation of the "Pipes-Minigames". Goal of the game is to connect the start
+// and the end pipe by rotating the pipes in between. 
+// The game keeps track of the board and the highscores with config files, which
+// need to be read from and written to.
 //
 // Group: 12
 //
@@ -14,15 +17,22 @@
 // TODO
 // Write Highscore back in Config File
 
+//----------
 // Includes
+//----------
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "framework.h"
 
+//----------
 // Defines
+//----------
+
 #define MAGIC_NUMBER "ESPipes"
+#define PLACEHOLDER_NAME "---"
 #define DO_RESTART 2
 #define HIGHSCORE_NAME_LENGTH 3
 
@@ -32,7 +42,10 @@
 #define FILTER_LEFT 0xC0
 #define SWITCH 0x40
 
+//----------
 // Typedefs
+//----------
+
 typedef enum _ReturnValue_
 {
   SUCCESS,
@@ -71,13 +84,18 @@ typedef enum _Direction_
   RIGHT
 } Direction;
 
-// Forward Definitions     TODO: order these the same way as below
+//---------------------
+// Forward Definitions
+//---------------------
+
+// Loading
 ReturnValue loadGame(Board** game_board, Highscore** highscore_list, char* file_name, char** error_context);
 FILE* openConfigFile(char* file_name, ReturnValue* error_code);
-void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, ReturnValue* error_code);
+ReturnValue loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file);
 void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error_code);
 void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code);
 
+// Game Logic
 ReturnValue runGame(Board* game_board, int* score, char* restart);
 Command getInput(char round, uint8_t* row, uint8_t* col, Direction* dir);
 char runCommand(Command command, Board* game_board, uint8_t row, uint8_t col, Direction dir, char* stop);
@@ -86,16 +104,19 @@ void setConnectedBits(Board* game_board, uint8_t row, uint8_t col);
 void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Direction dir);
 char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir);
 
+// Highscore
 void handleScore(Highscore* highscore_list, int score);
 char doesScoreBeatHighscore(Highscore* highscore_list, int score);
 char* beatHighscore();
 void printHighscore(Highscore* highscore_list);
 
+// Helper Functions
 void moveCoordiantesInDirection(uint8_t* row, uint8_t* col, Direction dir);
 char areCoordinatesOnBoard(Board* game_board, uint8_t row, uint8_t col);
 Direction getOppositeDirection(Direction dir);
 char isPipeOpenInDirection(uint8_t pipe, Direction dir);
 
+// Tidying Up
 void freeResources(Board* game_board, Highscore* highscore_list);
 int exitApplication(ReturnValue error_code, char* error_context);
 
@@ -103,13 +124,18 @@ int exitApplication(ReturnValue error_code, char* error_context);
 ///
 /// The main program
 /// 
-/// TODO
+/// Checks if the amount of parameters is correct and calls
+/// the other functions for loading and running the game
+/// and for handling the score and highscores.
+/// Frees the alloced ressoures on exit.
 ///
-/// @return always zero
+/// @param argc count of the parameters
+/// @param argv list of the parameters
+///
+/// @return 1 - 4 based on the error that occured; 0 on success
 //
 int main(int argc, char** argv)
 {
-
   if (argc != 2)
   {
     return exitApplication(WRONG_PARAMETER, NULL);
@@ -151,10 +177,15 @@ int main(int argc, char** argv)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Loads the important variables for the game by setting "game_board"
+/// and "highscore_list" accord to a config file.
 /// 
+/// @param gameboard A pointer to a pointer to the Board instance 
+/// @param highscore_list A pointer to a pointer to the Highscore instance 
+/// @param file_name A string with the path to the config file
+/// @param error_context A pointer to a string that contains infomation if an error occured
 ///
-/// @return TODO
+/// @return 1 - 4 based on the error that occured; 0 on success
 //
 ReturnValue loadGame(Board** game_board, Highscore** highscore_list, char* file_name, char** error_context)
 {
@@ -167,17 +198,19 @@ ReturnValue loadGame(Board** game_board, Highscore** highscore_list, char* file_
     return error_code;
   }
 
-  loadConfigFile(game_board, highscore_list, file, &error_code);
+  error_code = loadConfigFile(game_board, highscore_list, file);
 
   return error_code;
 }
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Attemps to open a config file and checks if it is formated correctly
 /// 
+/// @param file_name A string with the path to the config file
+/// @param error_code gets set to 1 - 4 based on the error that occured or 0 on success
 ///
-/// @return TODO
+/// @return A pointer to the opened file, NULL on error
 //
 FILE* openConfigFile(char* file_name, ReturnValue* error_code)
 {
@@ -204,19 +237,24 @@ FILE* openConfigFile(char* file_name, ReturnValue* error_code)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Loads a Config File and writes contents to parameters
 ///
-/// @return TODO
+/// @param gameboard A pointer to a pointer to the Board instance 
+/// @param highscore_list A pointer to a pointer to the Highscore instance 
+/// @param file A file pointer to the config file
+///
+/// @return 1 - 4 based on the error that occured; 0 on success
 //
-void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, ReturnValue* error_code)
+ReturnValue loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file)
 {
   *game_board = malloc(sizeof(Board));
   *highscore_list = malloc(sizeof(Highscore));
 
+  ReturnValue error_code = SUCCESS;
+
   if (game_board == NULL || highscore_list == NULL)
   {
-    *error_code = OUT_OF_MEMORY;
+    error_code = OUT_OF_MEMORY;
 
     if (game_board != NULL)
     {
@@ -226,7 +264,7 @@ void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, 
     {
       free(highscore_list);
     }
-    return;
+    return error_code;
   }
 
   // Read fix-sized part of config
@@ -237,15 +275,16 @@ void loadConfigFile(Board** game_board, Highscore** highscore_list, FILE* file, 
   fread(&((*highscore_list)->count), 1, 1, file);
 
   // Read variable-sized part of config
-  loadHighscoreList(*highscore_list, file, error_code);
-  loadGameBoard(*game_board, file, error_code);
+  loadHighscoreList(*highscore_list, file, &error_code);
+  loadGameBoard(*game_board, file, &error_code);
 
   fclose(file);
+  return error_code;
 }
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Loads the highscore list form a config file
 /// 
 ///
 /// @return TODO
@@ -269,7 +308,7 @@ void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Loads the highscore list form a config file
 /// 
 ///
 /// @return TODO
@@ -633,10 +672,12 @@ void handleScore(Highscore* highscore_list, int score)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Checks if a certain score beats a highscore int the list
 /// 
+/// @param highscore_list the list to check in
+/// @param score the score to use to check
 ///
-/// @return TODO
+/// @return a char that can be interpreted as true/false
 //
 char doesScoreBeatHighscore(Highscore* highscore_list, int score)
 {
@@ -653,10 +694,10 @@ char doesScoreBeatHighscore(Highscore* highscore_list, int score)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Prints the information that a highscore was beat to stdout
+/// Then asks the user for a 3-letter name
 ///
-/// @return TODO
+/// @return A string containing the user-name
 //
 char* beatHighscore()
 {
@@ -703,10 +744,9 @@ char* beatHighscore()
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Prints to list of highscores to stdout
 ///
-/// @return TODO
+/// @param highscore_list pointer to the Highscore instance to print 
 //
 void printHighscore(Highscore* highscore_list)
 {
@@ -717,7 +757,7 @@ void printHighscore(Highscore* highscore_list)
     int score = highscore_list->entries[i].score;
     if (score == 0)
     {
-      printf(INFO_HIGHSCORE_ENTRY, "---", score);
+      printf(INFO_HIGHSCORE_ENTRY, PLACEHOLDER_NAME, score);
     } 
     else 
     {
@@ -728,10 +768,11 @@ void printHighscore(Highscore* highscore_list)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Takes two coordinates as parameters and changes to according to a direction
 ///
-/// @return TODO
+/// @param row a pointer to the row index
+/// @param col a pointer to the column index
+/// @param dir the direction to change coordinates to
 //
 void moveCoordiantesInDirection(uint8_t* row, uint8_t* col, Direction dir)
 {
@@ -754,10 +795,13 @@ void moveCoordiantesInDirection(uint8_t* row, uint8_t* col, Direction dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Checks if two coordinates are in bounds of the map
 /// 
-///
-/// @return TODO
+/// @param game_board the game board to check in
+/// @param row the row index
+/// @param col the column index
+//
+/// @return a char that can be interpreted as true/false
 //
 char areCoordinatesOnBoard(Board* game_board, uint8_t row, uint8_t col)
 {
@@ -771,10 +815,11 @@ char areCoordinatesOnBoard(Board* game_board, uint8_t row, uint8_t col)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Takes a direction as parameter and return the opposite
 ///
-/// @return TODO
+/// @param the direction tho get the opposite from 
+///
+/// @return the opposite direction
 //
 Direction getOppositeDirection(Direction dir)
 {
@@ -791,10 +836,12 @@ Direction getOppositeDirection(Direction dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Checks if a pipe in open in one direction
 ///
-/// @return TODO
+/// @param pipe the pipe that should be checked
+/// @param dir the direction to check for
+///
+/// @return a char that can be interpreted as true/false
 //
 char isPipeOpenInDirection(uint8_t pipe, Direction dir)
 {
@@ -805,10 +852,10 @@ char isPipeOpenInDirection(uint8_t pipe, Direction dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Frees the ressources that were alloced for the game
 /// 
-///
-/// @return TODO
+/// @param game_board A pointer to the Board instance taht should be freed
+/// @param highscore_list A pointer to the Highscore instance taht should be freed
 //
 void freeResources(Board* game_board, Highscore* highscore_list)
 {
@@ -834,10 +881,12 @@ void freeResources(Board* game_board, Highscore* highscore_list)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Prints an error message based on an error code and returns it
 /// 
+/// @param error_code the error_code describing the message
+/// @param error_context context for printing the error message
 ///
-/// @return TODO
+/// @return 1 - 4 based on the error code
 //
 int exitApplication(ReturnValue error_code, char* error_context)
 {
@@ -858,6 +907,5 @@ int exitApplication(ReturnValue error_code, char* error_context)
   default:
     break;
   }
-
   return error_code;
 }
