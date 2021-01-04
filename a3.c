@@ -10,17 +10,6 @@
 //-----------------------------------------------------------------------------
 //
 
-
-
-///TODO WHY is test 9 not doing anything?????
-
-
-
-
-
-
-
-
 // Includes
 #include <stdlib.h>
 #include <stdio.h>
@@ -129,6 +118,7 @@ int exitApplication(ReturnValue error_code, char* error_context);
 //
 int main(int argc, char** argv)
 {
+
   if (argc != 2)
   {
     return exitApplication(WRONG_PARAMETER, NULL);
@@ -143,6 +133,12 @@ int main(int argc, char** argv)
 
   do 
   {
+    if (restart)
+    {
+      restart = false;
+      freeResources(game_board, highscore_list);
+    }
+
     error_code = loadGame(&game_board, &highscore_list, argv[1], &error_context);
     if (error_code != NONE)
     {
@@ -153,7 +149,7 @@ int main(int argc, char** argv)
   }
   while (restart);
 
-  if (error_code == SUCCESS)
+  if (error_code == SUCCESS && score != 0)
   {
     handleScore(highscore_list, score);
   }
@@ -379,14 +375,18 @@ ReturnValue runGame(Board* game_board, int* score, char* restart)
     }  
   }
 
-  printMap(
-    game_board->map, 
-    game_board->map_width, 
-    game_board->map_height, 
-    game_board->start, 
-    game_board->end
-  );
-  *score = round - 1;
+  if (command != QUIT)
+  {
+    printMap(
+      game_board->map, 
+      game_board->map_width, 
+      game_board->map_height, 
+      game_board->start, 
+      game_board->end
+    );
+    *score = round - 1;
+  }
+
   return SUCCESS;
 }
 
