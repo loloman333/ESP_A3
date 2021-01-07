@@ -105,7 +105,8 @@ void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Dir
 char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir);
 
 // Highscore
-void handleScore(Highscore* highscore_list, int score);
+ReturnValue handleScore(Highscore* highscore_list, int score, char* file_name);
+ReturnValue writeHighscore(Highscore* highscore_list, char* file_name);
 char doesScoreBeatHighscore(Highscore* highscore_list, int score);
 char* beatHighscore();
 void printHighscore(Highscore* highscore_list);
@@ -168,7 +169,7 @@ int main(int argc, char** argv)
 
   if (error_code == SUCCESS && score != 0)
   {
-    handleScore(highscore_list, score);
+    error_code = handleScore(highscore_list, score, argv[1]);
   }
 
   freeResources(game_board, highscore_list);
@@ -223,7 +224,7 @@ FILE* openConfigFile(char* file_name, ReturnValue* error_code)
   }
 
   char firstBytes[8];
-  fgets(firstBytes, 8, file); //TODO: Return value interesting?
+  fgets(firstBytes, 8, file);
 
   if (strcmp(firstBytes, MAGIC_NUMBER))
   {
@@ -664,11 +665,15 @@ char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 /// 
 /// @param highscore_list A pointer to the Highscore instance
 /// @param score the new score
+///
+/// @return 1 - 4 based on the error that occured; 0 on success
 //
-void handleScore(Highscore* highscore_list, int score)
+ReturnValue handleScore(Highscore* highscore_list, int score, char* file_name)
 {
   printf(INFO_PUZZLE_SOLVED);
   printf(INFO_SCORE, score);
+
+  ReturnValue error_code = SUCCESS;
 
   if (doesScoreBeatHighscore(highscore_list, score))
   {
@@ -694,9 +699,43 @@ void handleScore(Highscore* highscore_list, int score)
         new_entry = tmp;
       }
     }
+
+    error_code = writeHighscore(highscore_list, file_name);
   }
 
   printHighscore(highscore_list);   
+  return error_code;
+}
+
+//-----------------------------------------------------------------------------
+/// 
+/// Writes the highscore back to the config file
+/// 
+/// @param highscore_list A pointer to the Highscore instance
+/// @param file_name path to config file
+///
+/// @return 1 - 4 based on the error that occured; 0 on success
+//
+ReturnValue writeHighscore(Highscore* highscore_list, char* file_name)
+{
+  ReturnValue error_code = SUCCESS;
+  FILE* file = openConfigFile(file_name, &error_code);
+
+  if (error_code != SUCCESS)
+  {
+    return error_code;
+  }
+
+  fseek(file, 14, SEEK_SET); //TODO 15?
+
+  for (int i = 0; i < highscore_list->count; i++)
+  {
+    fwrite(&((highscore_list->entries[i]).score), 1, 1, file);
+    fwrite(&((highscore_list->entries[i]).name), 3, 1, file);
+  }
+
+  fclose(file);
+  return SUCCESS;
 }
 
 //-----------------------------------------------------------------------------
