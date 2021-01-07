@@ -3,10 +3,10 @@
 //
 // ESPipes
 // 
-// A variation of the "Pipes-Minigames". Goal of the game is to connect the start
-// and the end pipe by rotating the pipes in between. 
-// The game keeps track of the board and the highscores with config files, which
-// need to be read from and written to.
+// A variation of the "Pipes-Minigames". Goal of the game is to connect the 
+// start and the end pipe by rotating the pipes in between. 
+// The game keeps track of the board and the highscores with config files, 
+// which need to be read from and written to.
 //
 // Group: 12
 //
@@ -285,9 +285,10 @@ ReturnValue loadConfigFile(Board** game_board, Highscore** highscore_list, FILE*
 //-----------------------------------------------------------------------------
 /// 
 /// Loads the highscore list form a config file
-/// 
 ///
-/// @return TODO
+/// @param highscore_list A pointer to the Highscore instance 
+/// @param file A file pointer to the config file
+/// @param error_code error_code based on the error that occured
 //
 void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error_code)
 {
@@ -310,8 +311,9 @@ void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error
 /// 
 /// Loads the highscore list form a config file
 /// 
-///
-/// @return TODO
+/// @param game_board A pointer to the Board instance
+/// @param file A file pointer to the config file
+/// @param error_code error_code based on the error that occured
 //
 void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
 {
@@ -340,10 +342,14 @@ void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Runs the game by printing the map, asking for user input
+/// and executing the commands available to the user
 /// 
+/// @param game_board A pointer to the Board instance
+/// @param score A pointer to an integer variable - will be filled with the score
+/// @param restart a char that can be interpreted as true/false - true if the game should be restarted
 ///
-/// @return TODO
+/// @return 1 - 4 based on the error that occured; 0 on success
 //
 ReturnValue runGame(Board* game_board, int* score, char* restart)
 {
@@ -422,10 +428,15 @@ ReturnValue runGame(Board* game_board, int* score, char* restart)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Prompts the user for an input, checks if the input is
+/// a valid command and saves the information to parameters.
 /// 
+/// @param round The current round number
+/// @param row A pointer to the row - Will be set if command = rotate
+/// @param col A pointer to the column - Will be set if command = rotate
+/// @param dir A pointer to the direction - Will be set if command = rotate
 ///
-/// @return TODO
+/// @return Command that corresponds to user input; NONE if out of memory
 //
 Command getInput(char round, uint8_t* row, uint8_t* col, Direction* dir)
 {
@@ -471,10 +482,16 @@ Command getInput(char round, uint8_t* row, uint8_t* col, Direction* dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Executes a single command with ceritain parameters
 /// 
+/// @param command The command to execute
+/// @param game_board A pointer to a Board instance
+/// @param row If command = rotate: the row index
+/// @param col If command = rotate: the column index
+/// @param dir If command = rotate: the direction to rotate
+/// @param stop A pointer to a character - will be set to "true" if game should stop
 ///
-/// @return TODO
+/// @return true if successfull; false otherwise
 //
 char runCommand(Command command, Board* game_board, uint8_t row, uint8_t col, Direction dir, char* stop)
 {
@@ -505,10 +522,14 @@ char runCommand(Command command, Board* game_board, uint8_t row, uint8_t col, Di
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Rotates a pipe at certain coordinates in certain direction
 /// 
+/// @param game_board A pointer to a Board instance
+/// @param row the row index
+/// @param col the column index
+/// @param dir the direction to rotate in
 ///
-/// @return TODO
+/// @return true if successfull; false otherwise
 //
 char rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 {
@@ -546,10 +567,11 @@ char rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Updates the connected bits of a pipe and its neighbors
 /// 
-///
-/// @return TODO
+/// @param game_board A pointer to a Board instance
+/// @param row the row index
+/// @param col the column index
 //
 void setConnectedBits(Board* game_board, uint8_t row, uint8_t col)
 {
@@ -569,10 +591,12 @@ void setConnectedBits(Board* game_board, uint8_t row, uint8_t col)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
-/// 
+/// Updates the connected bit of a pipe in one direction
 ///
-/// @return TODO
+/// @param game_board A pointer to a Board instance
+/// @param row the row index
+/// @param col the column index
+/// @param dir the direction of the bit to set
 //
 void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 {
@@ -605,10 +629,14 @@ void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Dir
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Checks if a pipe should connect in one direction
 /// 
+/// @param game_board A pointer to a Board instance
+/// @param row the row index
+/// @param col the column index
+/// @param dir the direction to check
 ///
-/// @return TODO
+/// @return a char that can be interpreted as true/false
 //
 char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 {
@@ -631,10 +659,11 @@ char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 
 //-----------------------------------------------------------------------------
 /// 
-/// TODO
+/// Takes a score as parameter, checks if it breaks a highscore 
+/// and eventually asks for a name and updates the highscores
 /// 
-///
-/// @return TODO
+/// @param highscore_list A pointer to the Highscore instance
+/// @param score the new score
 //
 void handleScore(Highscore* highscore_list, int score)
 {
