@@ -14,9 +14,6 @@
 //-----------------------------------------------------------------------------
 //
 
-// TODO
-// Write Highscore back in Config File
-
 //----------
 // Includes
 //----------
@@ -726,7 +723,7 @@ ReturnValue writeHighscore(Highscore* highscore_list, char* file_name)
     return error_code;
   }
 
-  fseek(file, 14, SEEK_SET); //TODO 15?
+  fseek(file, 14, SEEK_SET);
 
   for (int i = 0; i < highscore_list->count; i++)
   {
