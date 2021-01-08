@@ -54,23 +54,23 @@ typedef enum _ReturnValue_
 
 typedef struct _Board_
 {
-  uint8_t** map;
-  uint8_t map_width;
-  uint8_t map_height;
-  uint8_t start[2];
-  uint8_t end[2];
+  uint8_t** map_;
+  uint8_t map_width_;
+  uint8_t map_height_;
+  uint8_t start_[2];
+  uint8_t end_[2];
 } Board;
 
 typedef struct _HighscoreEntry_
 {
-  uint8_t score;
-  char name[4];
+  uint8_t score_;
+  char name_[4];
 } HighscoreEntry;
 
 typedef struct _Highscore_
 {
-  uint8_t count;
-  HighscoreEntry* entries;
+  uint8_t count_;
+  HighscoreEntry* entries_;
 } Highscore;
 
 typedef enum _Direction_
@@ -266,11 +266,11 @@ ReturnValue loadConfigFile(Board** game_board, Highscore** highscore_list, FILE*
   }
 
   // Read fix-sized part of config
-  fread(&((*game_board)->map_width), 1, 1, file);
-  fread(&((*game_board)->map_height), 1, 1, file);
-  fread(&((*game_board)->start), 1, 2, file);
-  fread(&((*game_board)->end), 1, 2, file);
-  fread(&((*highscore_list)->count), 1, 1, file);
+  fread(&((*game_board)->map_width_), 1, 1, file);
+  fread(&((*game_board)->map_height_), 1, 1, file);
+  fread(&((*game_board)->start_), 1, 2, file);
+  fread(&((*game_board)->end_), 1, 2, file);
+  fread(&((*highscore_list)->count_), 1, 1, file);
 
   // Read variable-sized part of config
   loadHighscoreList(*highscore_list, file, &error_code);
@@ -290,18 +290,18 @@ ReturnValue loadConfigFile(Board** game_board, Highscore** highscore_list, FILE*
 //
 void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error_code)
 {
-  highscore_list->entries = malloc(sizeof(HighscoreEntry) * highscore_list->count);
-  if (highscore_list->entries == NULL)
+  highscore_list->entries_ = malloc(sizeof(HighscoreEntry) * highscore_list->count_);
+  if (highscore_list->entries_ == NULL)
   {
     *error_code = OUT_OF_MEMORY;
     return;
   }
 
-  for (int i = 0; i < highscore_list->count; i++)
+  for (int i = 0; i < highscore_list->count_; i++)
   {
-    fread(&((highscore_list->entries[i]).score), 1, 1, file);
-    fread(&((highscore_list->entries[i]).name), 3, 1, file);
-    highscore_list->entries[i].name[3] = '\0';
+    fread(&((highscore_list->entries_[i]).score_), 1, 1, file);
+    fread(&((highscore_list->entries_[i]).name_), 3, 1, file);
+    highscore_list->entries_[i].name_[3] = '\0';
   }
 }
 
@@ -315,25 +315,25 @@ void loadHighscoreList(Highscore* highscore_list, FILE* file, ReturnValue* error
 //
 void loadGameBoard(Board* game_board, FILE* file, ReturnValue* error_code)
 {
-  game_board->map = malloc(sizeof(uint8_t*) * game_board->map_height);
-  if (game_board->map == NULL)
+  game_board->map_ = malloc(sizeof(uint8_t*) * game_board->map_height_);
+  if (game_board->map_ == NULL)
   {
     *error_code = OUT_OF_MEMORY;
     return;
   }
 
-  for (int row_index = 0; row_index < game_board->map_height; row_index++)
+  for (int row_index = 0; row_index < game_board->map_height_; row_index++)
   {
-    game_board->map[row_index] = malloc(sizeof(uint8_t) * game_board->map_width);
-    if (game_board->map[row_index] == NULL)
+    game_board->map_[row_index] = malloc(sizeof(uint8_t) * game_board->map_width_);
+    if (game_board->map_[row_index] == NULL)
     {
       *error_code = OUT_OF_MEMORY;
       return;
     }
 
-    for (int col_index = 0; col_index < game_board->map_width; col_index++)
+    for (int col_index = 0; col_index < game_board->map_width_; col_index++)
     {    
-      fread(&(game_board->map[row_index][col_index]), 1, 1, file);
+      fread(&(game_board->map_[row_index][col_index]), 1, 1, file);
     }
   }
 }
@@ -368,11 +368,11 @@ ReturnValue runGame(Board* game_board, int* score, char* restart)
     else
     {
       printMap(
-        game_board->map, 
-        game_board->map_width, 
-        game_board->map_height, 
-        game_board->start, 
-        game_board->end
+        game_board->map_, 
+        game_board->map_width_, 
+        game_board->map_height_, 
+        game_board->start_, 
+        game_board->end_
       );
     } 
 
@@ -400,11 +400,11 @@ ReturnValue runGame(Board* game_board, int* score, char* restart)
     if (!stop)
     {
       stop = arePipesConnected(
-        game_board->map, 
-        game_board->map_width, 
-        game_board->map_height, 
-        game_board->start, 
-        game_board->end
+        game_board->map_, 
+        game_board->map_width_, 
+        game_board->map_height_, 
+        game_board->start_, 
+        game_board->end_
       );
     }  
   }
@@ -412,11 +412,11 @@ ReturnValue runGame(Board* game_board, int* score, char* restart)
   if (command != QUIT)
   {
     printMap(
-      game_board->map, 
-      game_board->map_width, 
-      game_board->map_height, 
-      game_board->start, 
-      game_board->end
+      game_board->map_, 
+      game_board->map_width_, 
+      game_board->map_height_, 
+      game_board->start_, 
+      game_board->end_
     );
     *score = round - 1;
   }
@@ -538,14 +538,14 @@ char rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir)
   }
   
 
-  if ((row == game_board->start[0] && col == game_board->start[1])
-    || (row == game_board->end[0] && col == game_board->end[1]))
+  if ((row == game_board->start_[0] && col == game_board->start_[1])
+    || (row == game_board->end_[0] && col == game_board->end_[1]))
   {
     printf(ERROR_ROTATE_INVALID);
     return false;
   }
 
-  uint8_t new_pipe = game_board->map[row][col];
+  uint8_t new_pipe = game_board->map_[row][col];
 
   if (dir == LEFT)
   {
@@ -556,7 +556,7 @@ char rotatePipe(Board* game_board, uint8_t row, uint8_t col, Direction dir)
     new_pipe = ((new_pipe & FILTER_LEFT) >> 6) | (new_pipe << 2);
   } 
 
-  game_board->map[row][col] = new_pipe;
+  game_board->map_[row][col] = new_pipe;
 
   setConnectedBits(game_board, row, col);
 
@@ -598,10 +598,10 @@ void setConnectedBits(Board* game_board, uint8_t row, uint8_t col)
 //
 void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
 {
-  uint8_t new_pipe = game_board->map[row][col];
+  uint8_t new_pipe = game_board->map_[row][col];
  
   char connected;
-  if (isPipeOpenInDirection(game_board->map[row][col], dir))
+  if (isPipeOpenInDirection(game_board->map_[row][col], dir))
   {
     connected = checkConnection(game_board, row, col, dir);
   }
@@ -621,7 +621,7 @@ void setConnectedBitInDirection(Board* game_board, uint8_t row, uint8_t col, Dir
     new_pipe = new_pipe & (~(SWITCH >> shift_value));
   }
 
-  game_board->map[row][col] = new_pipe; 
+  game_board->map_[row][col] = new_pipe; 
 
 }
 
@@ -647,7 +647,7 @@ char checkConnection(Board* game_board, uint8_t row, uint8_t col, Direction dir)
   }
 
   Direction opp_dir = getOppositeDirection(dir);
-  if (isPipeOpenInDirection(game_board->map[row][col], opp_dir))
+  if (isPipeOpenInDirection(game_board->map_[row][col], opp_dir))
   {
     return true;
   }
@@ -676,23 +676,23 @@ ReturnValue handleScore(Highscore* highscore_list, int score, char* file_name)
   {
     char* name = beatHighscore();
     HighscoreEntry new_entry;
-    new_entry.score = score;
-    strcpy(new_entry.name, name);
+    new_entry.score_ = score;
+    strcpy(new_entry.name_, name);
     free(name);
 
-    for (int i = 0; i < highscore_list->count; i++)
+    for (int i = 0; i < highscore_list->count_; i++)
     {
-      int entry_score = highscore_list->entries[i].score;
+      int entry_score = highscore_list->entries_[i].score_;
 
       if (entry_score == 0)
       {
-        highscore_list->entries[i] = new_entry;
+        highscore_list->entries_[i] = new_entry;
         break;
       }
-      else if (entry_score > new_entry.score)
+      else if (entry_score > new_entry.score_)
       {
-        HighscoreEntry tmp = highscore_list->entries[i];
-        highscore_list->entries[i] = new_entry;
+        HighscoreEntry tmp = highscore_list->entries_[i];
+        highscore_list->entries_[i] = new_entry;
         new_entry = tmp;
       }
     }
@@ -725,10 +725,10 @@ ReturnValue writeHighscore(Highscore* highscore_list, char* file_name)
 
   fseek(file, 14, SEEK_SET);
 
-  for (int i = 0; i < highscore_list->count; i++)
+  for (int i = 0; i < highscore_list->count_; i++)
   {
-    fwrite(&((highscore_list->entries[i]).score), 1, 1, file);
-    fwrite(&((highscore_list->entries[i]).name), 3, 1, file);
+    fwrite(&((highscore_list->entries_[i]).score_), 1, 1, file);
+    fwrite(&((highscore_list->entries_[i]).name_), 3, 1, file);
   }
 
   fclose(file);
@@ -746,9 +746,9 @@ ReturnValue writeHighscore(Highscore* highscore_list, char* file_name)
 //
 char doesScoreBeatHighscore(Highscore* highscore_list, int score)
 {
-  for (int i = 0; i < highscore_list->count; i++)
+  for (int i = 0; i < highscore_list->count_; i++)
   {
-    int entry_score = highscore_list->entries[i].score; 
+    int entry_score = highscore_list->entries_[i].score_; 
     if (entry_score == 0 || score < entry_score)
     {
       return true;
@@ -817,16 +817,16 @@ void printHighscore(Highscore* highscore_list)
 {
   printf(INFO_HIGHSCORE_HEADER);
 
-  for (int i = 0; i < highscore_list->count; i++)
+  for (int i = 0; i < highscore_list->count_; i++)
   {
-    int score = highscore_list->entries[i].score;
+    int score = highscore_list->entries_[i].score_;
     if (score == 0)
     {
       printf(INFO_HIGHSCORE_ENTRY, PLACEHOLDER_NAME, score);
     } 
     else 
     {
-      printf(INFO_HIGHSCORE_ENTRY, highscore_list->entries[i].name, score);
+      printf(INFO_HIGHSCORE_ENTRY, highscore_list->entries_[i].name_, score);
     }
   }
 }
@@ -871,8 +871,8 @@ void moveCoordiantesInDirection(uint8_t* row, uint8_t* col, Direction dir)
 char areCoordinatesOnBoard(Board* game_board, uint8_t row, uint8_t col)
 {
   char res = (
-    row > game_board->map_height - 1 || 
-    col > game_board->map_width - 1 ||
+    row > game_board->map_height_ - 1 || 
+    col > game_board->map_width_ - 1 ||
     row < 0 || col < 0);
 
   return !res;
@@ -926,19 +926,19 @@ void freeResources(Board* game_board, Highscore* highscore_list)
 {
   if (highscore_list != NULL)
   {
-    free(highscore_list->entries);
+    free(highscore_list->entries_);
     free(highscore_list);
   }
 
   if (game_board != NULL)
   {
-    if (game_board->map != NULL)
+    if (game_board->map_ != NULL)
     {
-      for (int i = 0; i < game_board->map_height; i++)
+      for (int i = 0; i < game_board->map_height_; i++)
       {
-        free(game_board->map[i]);
+        free(game_board->map_[i]);
       }
-      free(game_board->map);
+      free(game_board->map_);
     }
     free(game_board);
   }  
